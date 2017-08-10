@@ -5,7 +5,13 @@ VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenGL.ES", "OpenGL.ES\OpenGL.ES.vcxproj", "{19885FFC-23C8-4721-B3D7-E9E7E447A023}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GLES.Platform.Adapter", "GLES.Platform.Adapter\GLES.Platform.Adapter.vcxitems", "{8514A0E5-BAD1-495A-A633-007845266035}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		GLES.Platform.Adapter\GLES.Platform.Adapter.vcxitems*{19885ffc-23c8-4721-b3d7-e9e7e447a023}*SharedItemsImports = 4
+		GLES.Platform.Adapter\GLES.Platform.Adapter.vcxitems*{8514a0e5-bad1-495a-a633-007845266035}*SharedItemsImports = 9
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86

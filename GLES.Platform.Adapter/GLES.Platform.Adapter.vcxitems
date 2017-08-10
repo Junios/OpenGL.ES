@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{8514a0e5-bad1-495a-a633-007845266035}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\opengles3-book-master\Common\Include\esUtil.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\opengles3-book-master\Common\Source\esShader.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\opengles3-book-master\Common\Source\esShapes.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\opengles3-book-master\Common\Source\esTransform.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\opengles3-book-master\Common\Source\esUtil.c" />
+  </ItemGroup>
+</Project>

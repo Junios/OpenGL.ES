@@ -56,6 +56,7 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="Shared">
+    <Import Project="..\GLES.Platform.Adapter\GLES.Platform.Adapter.vcxitems" Label="Shared" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -77,8 +78,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)Mali_OpenGL_ES_Emulator-v3.0.2.g694a9-Windows-64bit\include</IncludePath>
-    <LibraryPath>$(SolutionDir)Mali_OpenGL_ES_Emulator-v3.0.2.g694a9-Windows-64bit;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)Mali_OpenGL_ES_Emulator-v3.0.2.g694a9-Windows-64bit\include;$(SolutionDir)opengles3-book-master\Common\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;$(SolutionDir)Mali_OpenGL_ES_Emulator-v3.0.2.g694a9-Windows-64bit;</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -87,8 +88,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)Mali_OpenGL_ES_Emulator-v3.0.2.g694a9-Windows-64bit\include</IncludePath>
-    <LibraryPath>$(SolutionDir)Mali_OpenGL_ES_Emulator-v3.0.2.g694a9-Windows-64bit;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)Mali_OpenGL_ES_Emulator-v3.0.2.g694a9-Windows-64bit\include;$(SolutionDir)opengles3-book-master\Common\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;$(SolutionDir)Mali_OpenGL_ES_Emulator-v3.0.2.g694a9-Windows-64bit;</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -110,6 +111,8 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableLanguageExtensions>true</DisableLanguageExtensions>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -151,6 +154,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\opengles3-book-master\Common\Source\Win32\esUtil_win32.c" />
+    <ClCompile Include="Hello_Triangle.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\opengles3-book-master\Common\Include\esUtil_win.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

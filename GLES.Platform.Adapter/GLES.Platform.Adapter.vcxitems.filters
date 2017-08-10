@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{718cedb4-919f-4654-9eb6-53431ccbb95c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{3fc26fa8-fe53-4e5d-86bf-060da1138435}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\git.repositories\OpenGL.ES\GLES.Platform.Adapter\..\opengles3-book-master\Common\Include\esUtil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="D:\git.repositories\OpenGL.ES\GLES.Platform.Adapter\..\opengles3-book-master\Common\Source\esShader.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\git.repositories\OpenGL.ES\GLES.Platform.Adapter\..\opengles3-book-master\Common\Source\esShapes.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\git.repositories\OpenGL.ES\GLES.Platform.Adapter\..\opengles3-book-master\Common\Source\esTransform.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\git.repositories\OpenGL.ES\GLES.Platform.Adapter\..\opengles3-book-master\Common\Source\esUtil.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
