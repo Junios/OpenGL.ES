@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <vector>
+#include <string>
 
 #include <esUtil.h>
 #include <esUtil_win.h>
@@ -51,9 +52,17 @@ GLuint load_shader(GLenum type, const char* shader_src)
 int init(ESContext* esContext)
 {
 	user_data* userdata = static_cast<user_data*>(esContext->userData);
-	std::vector<GLchar> vertex_shader_src{
-		"#version 300 es\n",
-		"layout(location = 0) in vec4 vPosition;\n",
-		"void main()\n",
+	std::string vertex_shader_src{
+		"#version 300 es\n"
+		"layout(location = 0) in vec4 vPosition;\n"
+		"void main()\n"
 	};
+
+	return 0;
+}
+
+extern "C"
+int esMain(ESContext *esContext)
+{
+	return 0;
 }

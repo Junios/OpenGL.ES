@@ -9,22 +9,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D:\git.repositories\OpenGL.ES\GLES.Platform.Adapter\..\opengles3-book-master\Common\Include\esUtil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\opengles3-book-master\Common\Include\esUtil.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="D:\git.repositories\OpenGL.ES\GLES.Platform.Adapter\..\opengles3-book-master\Common\Source\esShader.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="D:\git.repositories\OpenGL.ES\GLES.Platform.Adapter\..\opengles3-book-master\Common\Source\esShapes.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="D:\git.repositories\OpenGL.ES\GLES.Platform.Adapter\..\opengles3-book-master\Common\Source\esTransform.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="D:\git.repositories\OpenGL.ES\GLES.Platform.Adapter\..\opengles3-book-master\Common\Source\esUtil.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\opengles3-book-master\Common\Source\esShader.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\opengles3-book-master\Common\Source\esShapes.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\opengles3-book-master\Common\Source\esTransform.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\opengles3-book-master\Common\Source\esUtil.c" />
   </ItemGroup>
 </Project>

@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Hello_Triangle.cpp">
+    <ClCompile Include="..\opengles3-book-master\Common\Source\Win32\esUtil_win32.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\opengles3-book-master\Common\Source\Win32\esUtil_win32.c">
+    <ClCompile Include="Hello_Triangle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
