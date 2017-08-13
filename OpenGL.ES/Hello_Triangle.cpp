@@ -10,7 +10,7 @@
 #include <esUtil_win.h>
 
 struct user_data {
-	GLuint programObject;
+	GLuint program_object;
 };
 
 //Create a shader object, load the shader source, and compile the shader
@@ -110,7 +110,7 @@ bool init(ESContext* esContext)
 	glDeleteShader(vertex_shader);
 	glDeleteShader(fragment_shader);
 
-	userdata->programObject = program_object;
+	userdata->program_object = program_object;
 
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -132,7 +132,7 @@ void draw(ESContext* esContext)
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	//Use the program object
-	glUseProgram(userdata->programObject);
+	glUseProgram(userdata->program_object);
 
 	//Load the vertex data
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, vVertices.data());
@@ -144,14 +144,15 @@ void draw(ESContext* esContext)
 void shutdown(ESContext* esContext)
 {
 	user_data* userdata = static_cast<user_data*>(esContext->userData);
-	glDeleteProgram(userdata->programObject);
+	glDeleteProgram(userdata->program_object);
 }
 
 extern "C"
 int esMain(ESContext *esContext)
 {
 	esContext->userData = malloc(sizeof user_data);
-	esCreateWindow(esContext, "Hello Triangle", 640, 480, ES_WINDOW_RGB);
+	esCreateWindow(esContext, "Hello Triangle", 640, 480,
+		ES_WINDOW_RGB|ES_WINDOW_ALPHA|ES_WINDOW_DEPTH);
 
 	if (!init(esContext)) {
 		return GL_FALSE;
@@ -161,4 +162,116 @@ int esMain(ESContext *esContext)
 	esRegisterDrawFunc(esContext, draw);
 
 	return GL_TRUE;
+}
+
+extern "C" void WinLoop(ESContext *esContext);
+
+int debugMain()
+{
+	ESContext context = { 0, };
+	user_data userdata = { 0, };
+
+	context.userData = &userdata;
+	context.width = 640;
+	context.height = 480;
+
+	const char* title = "Hello Triangle";
+
+	//Create eglNativeWindow
+	//For Win32, CreateWindow is used.
+	if (WinCreate(&context, title) == GL_FALSE) {
+		std::cerr << std::hex << eglGetError() << '\n';
+		return 1;
+	}
+
+	if ((context.eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY)) == EGL_NO_DISPLAY) {
+		std::cerr << std::hex << eglGetError() << '\n';
+		return 1;
+	}
+	EGLint major, minor;
+	if (eglInitialize(context.eglDisplay, &major, &minor) == EGL_FALSE) {
+		std::cerr << std::hex << eglGetError() << '\n';
+		return 1;
+	}
+	else {
+		std::cout << "EGL version:\n";
+		std::cout << "Major: " << major << '\n';
+		std::cout << "Minor: " << minor << '\n';
+	}
+
+	EGLConfig config;
+	EGLint num_configs = 0;
+	std::vector<EGLint> attributes{
+		EGL_RED_SIZE, 8,
+		EGL_GREEN_SIZE, 8,
+		EGL_BLUE_SIZE, 8,
+		EGL_ALPHA_SIZE, 8,
+		EGL_DEPTH_SIZE, 8,
+		EGL_STENCIL_SIZE, EGL_DONT_CARE,
+		EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
+		EGL_NONE
+	};
+
+	if (eglChooseConfig(context.eglDisplay, attributes.data(),
+		&config, 1, &num_configs) == EGL_FALSE) {
+		std::cerr << std::hex << eglGetError() << '\n';
+		return 1;
+	}
+
+	if (num_configs < 1) {
+		std::cerr << "There is no matched EGL config!\n";
+		return 1;
+	}
+	else {
+		EGLint attrib;
+		eglGetConfigAttrib(context.eglDisplay, config, EGL_RED_SIZE, &attrib);
+		std::cout << "EGL_RED_SIZE: " << attrib << '\n';
+		eglGetConfigAttrib(context.eglDisplay, config, EGL_GREEN_SIZE, &attrib);
+		std::cout << "EGL_GREEN_SIZE: " << attrib << '\n';
+		eglGetConfigAttrib(context.eglDisplay, config, EGL_BLUE_SIZE, &attrib);
+		std::cout << "EGL_BLUE_SIZE: " << attrib << '\n';
+		eglGetConfigAttrib(context.eglDisplay, config, EGL_ALPHA_SIZE, &attrib);
+		std::cout << "EGL_ALPHA_SIZE: " << attrib << '\n';
+		eglGetConfigAttrib(context.eglDisplay, config, EGL_DEPTH_SIZE, &attrib);
+		std::cout << "EGL_DEPTH_SIZE: " << attrib << '\n';
+		eglGetConfigAttrib(context.eglDisplay, config, EGL_STENCIL_SIZE, &attrib);
+		std::cout << "EGL_STENCIL_SIZE: " << attrib << '\n';
+		eglGetConfigAttrib(context.eglDisplay, config, EGL_RENDERABLE_TYPE, &attrib);
+		std::cout << "EGL_RENDERABLE_TYPE: 0x" << std::hex << attrib << '\n';
+	}
+
+	if ((context.eglSurface = eglCreateWindowSurface(context.eglDisplay, config,
+		context.eglNativeWindow, NULL)) == EGL_NO_SURFACE) {
+		std::cerr << std::hex << eglGetError() << '\n';
+		return 1;
+	}
+	std::vector<EGLint> context_attributes{ EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE	};
+	if ((context.eglContext = eglCreateContext(context.eglDisplay, config,
+		EGL_NO_CONTEXT, context_attributes.data())) == EGL_NO_CONTEXT) {
+		std::cerr << std::hex << eglGetError() << '\n';
+		return 1;
+	}
+
+	if (eglMakeCurrent(context.eglDisplay, context.eglSurface, context.eglSurface,
+		context.eglContext) == EGL_FALSE) {
+		std::cerr << std::hex << eglGetError() << '\n';
+		return 1;
+	}
+
+	if (!init(&context)) {
+		std::cerr << "Fail to init!\n";
+		return 1;
+	}
+
+	esRegisterDrawFunc(&context, draw);
+	esRegisterShutdownFunc(&context, shutdown);
+
+	WinLoop(&context);
+
+	if (context.shutdownFunc != NULL)
+	{
+		context.shutdownFunc(&context);
+	}
+
+	return 0;
 }
