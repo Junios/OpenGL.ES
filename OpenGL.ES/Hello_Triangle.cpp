@@ -5,6 +5,9 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <unordered_map>
+#include <algorithm>
+#include <numeric>
 
 #include <esUtil.h>
 #include <esUtil_win.h>
@@ -55,6 +58,8 @@ bool init(ESContext* esContext)
 	std::string vertex_shader_src{
 		"#version 300 es                         \n"
 		"layout(location = 0) in vec4 vPosition; \n"
+		"uniform vec4 rgb;                       \n"
+		"uniform float alpha[4];                 \n"
 		"void main()                             \n"
 		"{                                       \n"
 		"    gl_Position = vPosition;            \n"
@@ -64,10 +69,13 @@ bool init(ESContext* esContext)
 	std::string fragment_shader_src{
 		"#version 300 es                           \n"
 		"precision mediump float;                  \n"
+		"uniform vec4 rgb;                         \n"
+		"uniform float alpha[4];                   \n"
 		"out vec4 fragColor;                       \n"
 		"void main()                               \n"
 		"{                                         \n"
-		"    fragColor = vec4(1.0, 0.0, 0.0, 1.0); \n"
+		"    vec4 color = vec4(rgb.rgb, alpha[3]);\n"
+		"    fragColor = color;                    \n"
 		"}                                         \n"
 	};
 
@@ -106,7 +114,81 @@ bool init(ESContext* esContext)
 		glDeleteProgram(program_object);
 		return false;
 	}
+	else {
+		std::unordered_map<EGLint, std::string> program_status{
+			{ GL_ACTIVE_ATTRIBUTES, "GL_ACTIVE_ATTRIBUTES" },
+			{ GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, "GL_ACTIVE_ATTRIBUTE_MAX_LENGTH" },
+			{ GL_ACTIVE_UNIFORM_BLOCKS, "GL_ACTIVE_UNIFORM_BLOCKS" },
+			{ GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, "GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH" },
+			{ GL_ACTIVE_UNIFORMS, "GL_ACTIVE_UNIFORMS" },
+			{ GL_ACTIVE_UNIFORM_MAX_LENGTH, "GL_ACTIVE_UNIFORM_MAX_LENGTH" },
+			{ GL_ATTACHED_SHADERS, "GL_ATTACHED_SHADERS" },
+			{ GL_DELETE_STATUS, "GL_DELETE_STATUS" },
+			{ GL_INFO_LOG_LENGTH, "GL_INFO_LOG_LENGTH" },
+			{ GL_LINK_STATUS, "GL_LINK_STATUS" },
+			{ GL_PROGRAM_BINARY_RETRIEVABLE_HINT, "GL_PROGRAM_BINARY_RETRIEVABLE_HINT" },
+			{ GL_TRANSFORM_FEEDBACK_BUFFER_MODE, "GL_TRANSFORM_FEEDBACK_BUFFER_MODE" },
+			{ GL_TRANSFORM_FEEDBACK_VARYINGS, "GL_TRANSFORM_FEEDBACK_VARYINGS" },
+			{ GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH, "GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH" },
+			{ GL_VALIDATE_STATUS, "GL_VALIDATE_STATUS" }
+		};
+		std::cerr << "Program status: " << program_object << '\n';
+		std::for_each(program_status.begin(), program_status.end(), [=](decltype(program_status)::reference kv) {
+			EGLint status;
+			glGetProgramiv(program_object, kv.first, &status);
+			std::cerr << kv.second << ": " << status << '\n';
+		});
+	}
 
+	GLint num_active_uniforms = 0;
+	GLint max_length_active_uniform = 0;
+	glGetProgramiv(program_object, GL_ACTIVE_UNIFORMS, &num_active_uniforms);
+	if (num_active_uniforms > 0) {
+		glGetProgramiv(program_object, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max_length_active_uniform);
+		std::vector<GLchar> uniform_name(max_length_active_uniform);
+
+		for (int i = 0; i < num_active_uniforms; ++i) {
+			GLsizei length = 0;
+			GLint size = 0;
+			GLenum type;
+			glGetActiveUniform(program_object, i, static_cast<GLsizei>(uniform_name.capacity()),
+				&length, &size, &type, uniform_name.data());
+			if (size == 1) {
+				std::cerr << "uniform[" << i << "] = " << uniform_name.data() << '\n';
+				std::cerr << "length: " << length << ", size: " << size << ", type: 0x" << std::hex << type << '\n';
+			}
+			else if (size > 1) {
+				std::unordered_map<uint32_t, std::string> uniform_details{
+					{ GL_UNIFORM_TYPE, "GL_UNIFORM_TYPE" },
+					{ GL_UNIFORM_SIZE, "GL_UNIFORM_SIZE" },
+					{ GL_UNIFORM_NAME_LENGTH, "GL_UNIFORM_NAME_LENGTH" },
+					{ GL_UNIFORM_BLOCK_INDEX, "GL_UNIFORM_BLOCK_INDEX" },
+					{ GL_UNIFORM_OFFSET, "GL_UNIFORM_OFFSET" },
+					{ GL_UNIFORM_ARRAY_STRIDE, "GL_UNIFORM_ARRAY_STRIDE" },
+					{ GL_UNIFORM_MATRIX_STRIDE, "GL_UNIFORM_MATRIX_STRIDE" },
+					{ GL_UNIFORM_IS_ROW_MAJOR, "GL_UNIFORM_IS_ROW_MAJOR" }
+				};
+				std::cerr << "uniform[" << i << "] = " << uniform_name.data() << '\n';
+				std::cerr << "length: " << length << ", size: " << size << ", type: 0x" << std::hex << type << '\n';
+				std::for_each(uniform_details.cbegin(), uniform_details.cend(), [=](decltype(uniform_details)::const_reference kv) {
+					std::vector<GLuint> indices(size);
+					std::vector<GLint> params(size);
+					std::vector<const char*> names{
+						"alpha[0]", "alpha[1]", "alpha[2]", "alpha[3]"
+					};
+					glGetUniformIndices(program_object, size, names.data(), indices.data());
+					glGetActiveUniformsiv(program_object, size, indices.data(), kv.first, params.data());
+					std::cerr << kv.second << ":\n";
+					for (int x = 0; x < size; ++x) {
+						std::cerr << "[" << x << "]: " << params[x] << '\n';
+					}
+				});
+			}
+		}
+	}
+
+	//These calls does not delete immediately, but marked them to be deleted
+	//when no programs used them
 	glDeleteShader(vertex_shader);
 	glDeleteShader(fragment_shader);
 
@@ -166,7 +248,7 @@ int esMain(ESContext *esContext)
 
 extern "C" void WinLoop(ESContext *esContext);
 
-int debugMain()
+int main()
 {
 	ESContext context = { 0, };
 	user_data userdata = { 0, };
@@ -206,8 +288,9 @@ int debugMain()
 		EGL_GREEN_SIZE, 8,
 		EGL_BLUE_SIZE, 8,
 		EGL_ALPHA_SIZE, 8,
-		EGL_DEPTH_SIZE, 8,
+		EGL_DEPTH_SIZE, 16,
 		EGL_STENCIL_SIZE, EGL_DONT_CARE,
+		EGL_SAMPLE_BUFFERS, 1,
 		EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
 		EGL_NONE
 	};
@@ -242,7 +325,27 @@ int debugMain()
 
 	if ((context.eglSurface = eglCreateWindowSurface(context.eglDisplay, config,
 		context.eglNativeWindow, NULL)) == EGL_NO_SURFACE) {
-		std::cerr << std::hex << eglGetError() << '\n';
+		EGLint error = eglGetError();
+		std::cerr << std::hex << error << '\n';
+		switch (error) {
+		case EGL_BAD_MATCH:
+			std::cerr << "EGL_BAD_MATCH:\n";
+			std::cerr << "Check window and EGLConfig attributes to determine compatibility,\n"
+				"or verify that the EGLConfig supports rendering to a window\n";
+			break;
+		case EGL_BAD_CONFIG:
+			std::cerr << "EGL_BAD_CONFIG:\n";
+			std::cerr << "Verify that provided EGLConfig is valid\n";
+			break;
+		case EGL_BAD_NATIVE_WINDOW:
+			std::cerr << "EGL_BAD_NATIVE_WINDOW:\n";
+			std::cerr << "Verify that provided EGLNativeWindow is valid\n";
+			break;
+		case EGL_BAD_ALLOC:
+			std::cerr << "EGL_BAD_ALLOC:\n";
+			std::cerr << "Not enough resources available; handle and recover\n";
+			break;
+		}
 		return 1;
 	}
 	std::vector<EGLint> context_attributes{ EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE	};

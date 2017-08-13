@@ -236,7 +236,7 @@ extern int esMain ( ESContext *esContext );
 //
 //      Main entrypoint for application
 //
-int main ( int argc, char *argv[] )
+int _main ( int argc, char *argv[] )
 {
    ESContext esContext;
 
