@@ -68,14 +68,13 @@ bool init(ESContext* esContext)
 
 	std::string fragment_shader_src{
 		"#version 300 es                           \n"
-		"precision mediump float;                  \n"
+		"precision highp float;                    \n"
 		"uniform vec4 rgb;                         \n"
 		"uniform float alpha[4];                   \n"
 		"out vec4 fragColor;                       \n"
 		"void main()                               \n"
 		"{                                         \n"
-		"    vec4 color = vec4(rgb.rgb, alpha[3]);\n"
-		"    fragColor = color;                    \n"
+		"    fragColor = vec4(rgb.xyz, alpha[3]);  \n"
 		"}                                         \n"
 	};
 
@@ -149,41 +148,12 @@ bool init(ESContext* esContext)
 
 		for (int i = 0; i < num_active_uniforms; ++i) {
 			GLsizei length = 0;
-			GLint size = 0;
+			GLsizei size = 0;
 			GLenum type;
 			glGetActiveUniform(program_object, i, static_cast<GLsizei>(uniform_name.capacity()),
 				&length, &size, &type, uniform_name.data());
-			if (size == 1) {
-				std::cerr << "uniform[" << i << "] = " << uniform_name.data() << '\n';
-				std::cerr << "length: " << length << ", size: " << size << ", type: 0x" << std::hex << type << '\n';
-			}
-			else if (size > 1) {
-				std::unordered_map<uint32_t, std::string> uniform_details{
-					{ GL_UNIFORM_TYPE, "GL_UNIFORM_TYPE" },
-					{ GL_UNIFORM_SIZE, "GL_UNIFORM_SIZE" },
-					{ GL_UNIFORM_NAME_LENGTH, "GL_UNIFORM_NAME_LENGTH" },
-					{ GL_UNIFORM_BLOCK_INDEX, "GL_UNIFORM_BLOCK_INDEX" },
-					{ GL_UNIFORM_OFFSET, "GL_UNIFORM_OFFSET" },
-					{ GL_UNIFORM_ARRAY_STRIDE, "GL_UNIFORM_ARRAY_STRIDE" },
-					{ GL_UNIFORM_MATRIX_STRIDE, "GL_UNIFORM_MATRIX_STRIDE" },
-					{ GL_UNIFORM_IS_ROW_MAJOR, "GL_UNIFORM_IS_ROW_MAJOR" }
-				};
-				std::cerr << "uniform[" << i << "] = " << uniform_name.data() << '\n';
-				std::cerr << "length: " << length << ", size: " << size << ", type: 0x" << std::hex << type << '\n';
-				std::for_each(uniform_details.cbegin(), uniform_details.cend(), [=](decltype(uniform_details)::const_reference kv) {
-					std::vector<GLuint> indices(size);
-					std::vector<GLint> params(size);
-					std::vector<const char*> names{
-						"alpha[0]", "alpha[1]", "alpha[2]", "alpha[3]"
-					};
-					glGetUniformIndices(program_object, size, names.data(), indices.data());
-					glGetActiveUniformsiv(program_object, size, indices.data(), kv.first, params.data());
-					std::cerr << kv.second << ":\n";
-					for (int x = 0; x < size; ++x) {
-						std::cerr << "[" << x << "]: " << params[x] << '\n';
-					}
-				});
-			}
+			std::cerr << "uniform[" << i << "] = " << uniform_name.data() << '\n';
+			std::cerr << "length: " << length << ", size: " << size << ", type: 0x" << std::hex << type << '\n';
 		}
 	}
 
@@ -206,6 +176,11 @@ void draw(ESContext* esContext)
 	std::vector<GLfloat> vVertices{ 0.0f, 0.5f, 0.0f,
 									-0.5f, -0.5f, 0.0f,
 									0.5f, -0.5f, 0.0f };
+
+	GLint loc = glGetUniformLocation(userdata->program_object, "rgb");
+	glUniform4f(loc, 1.0f, 0.0f, 0.0f, 1.0f);
+	loc = glGetUniformLocation(userdata->program_object, "alpha[3]");
+	glUniform1f(loc, 0.1f);
 
 	//Set the viewport
 	glViewport(0, 0, esContext->width, esContext->height);
@@ -234,7 +209,7 @@ int esMain(ESContext *esContext)
 {
 	esContext->userData = malloc(sizeof user_data);
 	esCreateWindow(esContext, "Hello Triangle", 640, 480,
-		ES_WINDOW_RGB|ES_WINDOW_ALPHA|ES_WINDOW_DEPTH);
+		ES_WINDOW_RGB | ES_WINDOW_ALPHA | ES_WINDOW_DEPTH);
 
 	if (!init(esContext)) {
 		return GL_FALSE;
@@ -290,7 +265,7 @@ int main()
 		EGL_ALPHA_SIZE, 8,
 		EGL_DEPTH_SIZE, 16,
 		EGL_STENCIL_SIZE, EGL_DONT_CARE,
-		EGL_SAMPLE_BUFFERS, 1,
+		//EGL_SAMPLE_BUFFERS, 1,
 		EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
 		EGL_NONE
 	};
@@ -348,7 +323,7 @@ int main()
 		}
 		return 1;
 	}
-	std::vector<EGLint> context_attributes{ EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE	};
+	std::vector<EGLint> context_attributes{ EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
 	if ((context.eglContext = eglCreateContext(context.eglDisplay, config,
 		EGL_NO_CONTEXT, context_attributes.data())) == EGL_NO_CONTEXT) {
 		std::cerr << std::hex << eglGetError() << '\n';
