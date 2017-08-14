@@ -12,6 +12,157 @@
 #include <esUtil.h>
 #include <esUtil_win.h>
 
+void print_display_config(EGLDisplay const& dpy, EGLConfig const& config)
+{
+	std::unordered_map<EGLenum, std::string> display_attributes{
+		{ EGL_RED_SIZE, "EGL_RED_SIZE" },
+		{ EGL_GREEN_SIZE, "EGL_GREEN_SIZE" },
+		{ EGL_BLUE_SIZE, "EGL_BLUE_SIZE" },
+		{ EGL_ALPHA_SIZE, "EGL_ALPHA_SIZE" },
+		{ EGL_DEPTH_SIZE, "EGL_DEPTH_SIZE" },
+		{ EGL_STENCIL_SIZE, "EGL_STENCIL_SIZE" },
+		{ EGL_RENDERABLE_TYPE, "EGL_RENDERABLE_TYPE" },
+		{ EGL_SAMPLE_BUFFERS, "EGL_SAMPLE_BUFFERS" }
+	};
+
+	std::cout << "* Display config:\n";
+	std::cout << std::hex << "> Display: 0x" << static_cast<void*>(dpy)
+		<< ", Config: 0x" << static_cast<void*>(config) << '\n';
+	std::for_each(display_attributes.cbegin(), display_attributes.cend(), [&](auto const& kv) {
+		EGLint attrib;
+		eglGetConfigAttrib(dpy, config, kv.first, &attrib);
+		std::cout << "> " << kv.second << ":\t0x" << std::hex << attrib << "(" << std::dec << attrib << ")\n";
+	});
+}
+
+void print_egl_error(EGLint error)
+{
+	std::cerr << "* EGL error: 0x" << std::hex << error << "(" << std::dec << error << ")\n";
+	switch (error) {
+	case EGL_BAD_MATCH:
+		std::cerr << "> EGL_BAD_MATCH:\n";
+		std::cerr << "> Check window and EGLConfig attributes to determine compatibility,\n"
+			"> or verify that the EGLConfig supports rendering to a window\n";
+		break;
+	case EGL_BAD_CONFIG:
+		std::cerr << "> EGL_BAD_CONFIG:\n";
+		std::cerr << "> Verify that provided EGLConfig is valid\n";
+		break;
+	case EGL_BAD_NATIVE_WINDOW:
+		std::cerr << "> EGL_BAD_NATIVE_WINDOW:\n";
+		std::cerr << "> Verify that provided EGLNativeWindow is valid\n";
+		break;
+	case EGL_BAD_ALLOC:
+		std::cerr << "> EGL_BAD_ALLOC:\n";
+		std::cerr << "> Not enough resources available; handle and recover\n";
+		break;
+	}
+}
+
+void print_program_status(GLuint program)
+{
+	std::unordered_map<EGLint, std::string> program_status{
+		{ GL_ACTIVE_ATTRIBUTES, "GL_ACTIVE_ATTRIBUTES" },
+		{ GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, "GL_ACTIVE_ATTRIBUTE_MAX_LENGTH" },
+		{ GL_ACTIVE_UNIFORM_BLOCKS, "GL_ACTIVE_UNIFORM_BLOCKS" },
+		{ GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, "GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH" },
+		{ GL_ACTIVE_UNIFORMS, "GL_ACTIVE_UNIFORMS" },
+		{ GL_ACTIVE_UNIFORM_MAX_LENGTH, "GL_ACTIVE_UNIFORM_MAX_LENGTH" },
+		{ GL_ATTACHED_SHADERS, "GL_ATTACHED_SHADERS" },
+		{ GL_DELETE_STATUS, "GL_DELETE_STATUS" },
+		{ GL_INFO_LOG_LENGTH, "GL_INFO_LOG_LENGTH" },
+		{ GL_LINK_STATUS, "GL_LINK_STATUS" },
+		{ GL_PROGRAM_BINARY_RETRIEVABLE_HINT, "GL_PROGRAM_BINARY_RETRIEVABLE_HINT" },
+		{ GL_TRANSFORM_FEEDBACK_BUFFER_MODE, "GL_TRANSFORM_FEEDBACK_BUFFER_MODE" },
+		{ GL_TRANSFORM_FEEDBACK_VARYINGS, "GL_TRANSFORM_FEEDBACK_VARYINGS" },
+		{ GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH, "GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH" },
+		{ GL_VALIDATE_STATUS, "GL_VALIDATE_STATUS" },
+		{ GL_PROGRAM_BINARY_LENGTH, "GL_PROGRAM_BINARY_LENGTH" }
+	};
+
+	std::cout << "* Program status: 0x" << std::hex << program
+		<< "(" << std::dec << program << ")\n";
+
+	GLint num_program_binary_formats = 0;
+	glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &num_program_binary_formats);
+	std::cout << "> GL_NUM_PROGRAM_BINARY_FORMATS: " << num_program_binary_formats << '\n';
+	if (num_program_binary_formats > 0) {
+		std::vector<GLint> binary_formats(num_program_binary_formats);
+		glGetIntegerv(GL_PROGRAM_BINARY_FORMATS, binary_formats.data());
+		std::cout << "> GL_PROGRAM_BINARY_FORMATS: ";
+		for (auto format : binary_formats) {
+			std::cout << format << ", ";
+		}
+		std::cout << '\n';
+	}
+
+	std::for_each(program_status.begin(), program_status.end(), [=](auto const& kv) {
+		EGLint status;
+		glGetProgramiv(program, kv.first, &status);
+		std::cout << "> " << kv.second << ": 0x" << std::hex << status
+			<< "(" << std::dec << status << ")\n";
+	});
+}
+
+const std::string& get_gl_type_string(GLenum type)
+{
+	static const std::string UNKNOWN{ "UNKNOWN" };
+	static std::unordered_map<GLenum, std::string> gl_types{
+		{ GL_BYTE, "GL_BYTE" },
+		{ GL_UNSIGNED_BYTE, "GL_UNSIGNED_BYTE" },
+		{ GL_SHORT, "GL_SHORT" },
+		{ GL_UNSIGNED_SHORT, "GL_UNSIGNED_SHORT" },
+		{ GL_INT, "GL_INT" },
+		{ GL_UNSIGNED_INT, "GL_UNSIGNED_INT" },
+		{ GL_FLOAT, "GL_FLOAT" },
+		{ GL_FIXED, "GL_FIXED" },
+		{ GL_FLOAT_VEC2, "GL_FLOAT_VEC2" },
+		{ GL_FLOAT_VEC3, "GL_FLOAT_VEC3" },
+		{ GL_FLOAT_VEC4, "GL_FLOAT_VEC4" },
+		{ GL_INT_VEC2, "GL_INT_VEC2" },
+		{ GL_INT_VEC3, "GL_INT_VEC3" },
+		{ GL_INT_VEC4, "GL_INT_VEC4" },
+		{ GL_BOOL, "GL_BOOL" },
+		{ GL_BOOL_VEC2, "GL_BOOL_VEC2" },
+		{ GL_BOOL_VEC3, "GL_BOOL_VEC3" },
+		{ GL_BOOL_VEC4, "GL_BOOL_VEC4" },
+		{ GL_FLOAT_MAT2, "GL_FLOAT_MAT2" },
+		{ GL_FLOAT_MAT3, "GL_FLOAT_MAT3" },
+		{ GL_FLOAT_MAT4, "GL_FLOAT_MAT4" },
+		{ GL_SAMPLER_2D, "GL_SAMPLER_2D" },
+		{ GL_SAMPLER_CUBE, "GL_SAMPLER_CUBE" },
+	};
+
+	auto search = gl_types.find(type);
+	if (search == gl_types.end()) { return UNKNOWN; }
+
+	return search->second;
+}
+
+void print_uniform_info(GLuint program)
+{
+	std::cout << "* Uniform information:\n";
+	GLint num_active_uniforms = 0;
+	GLint max_length_active_uniform = 0;
+	glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &num_active_uniforms);
+	if (num_active_uniforms > 0) {
+		glGetProgramiv(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max_length_active_uniform);
+		std::vector<GLchar> uniform_name(max_length_active_uniform);
+
+		for (int i = 0; i < num_active_uniforms; ++i) {
+			GLsizei length = 0;
+			GLsizei size = 0;
+			GLenum type;
+			glGetActiveUniform(program, i, static_cast<GLsizei>(uniform_name.capacity()),
+				&length, &size, &type, uniform_name.data());
+			std::cout << "> uniform[" << i << "]\n";
+			std::cout << "  .name = " << uniform_name.data() << " .length(of name) = " << length << '\n';
+			std::cout << "  .type = " << get_gl_type_string(type) << "(0x" << std::hex << type
+				<< ")  .size = " << std::dec << size << '\n';
+		}
+	}
+}
+
 struct user_data {
 	GLuint program_object;
 };
@@ -60,8 +211,14 @@ bool init(ESContext* esContext)
 		"layout(location = 0) in vec4 vPosition; \n"
 		"uniform vec4 rgb;                       \n"
 		"uniform float alpha[4];                 \n"
+		"layout (std140) uniform LightBlock {    \n"
+		"    vec3 lightDirection;                \n"
+		"    vec4 lightPosition;                 \n"
+		"};                                      \n"
 		"void main()                             \n"
 		"{                                       \n"
+		"    vec3 ld = lightDirection;           \n"
+		"    vec4 lp = lightPosition;            \n"
 		"    gl_Position = vPosition;            \n"
 		"}                                       \n"
 	};
@@ -112,49 +269,6 @@ bool init(ESContext* esContext)
 
 		glDeleteProgram(program_object);
 		return false;
-	}
-	else {
-		std::unordered_map<EGLint, std::string> program_status{
-			{ GL_ACTIVE_ATTRIBUTES, "GL_ACTIVE_ATTRIBUTES" },
-			{ GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, "GL_ACTIVE_ATTRIBUTE_MAX_LENGTH" },
-			{ GL_ACTIVE_UNIFORM_BLOCKS, "GL_ACTIVE_UNIFORM_BLOCKS" },
-			{ GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, "GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH" },
-			{ GL_ACTIVE_UNIFORMS, "GL_ACTIVE_UNIFORMS" },
-			{ GL_ACTIVE_UNIFORM_MAX_LENGTH, "GL_ACTIVE_UNIFORM_MAX_LENGTH" },
-			{ GL_ATTACHED_SHADERS, "GL_ATTACHED_SHADERS" },
-			{ GL_DELETE_STATUS, "GL_DELETE_STATUS" },
-			{ GL_INFO_LOG_LENGTH, "GL_INFO_LOG_LENGTH" },
-			{ GL_LINK_STATUS, "GL_LINK_STATUS" },
-			{ GL_PROGRAM_BINARY_RETRIEVABLE_HINT, "GL_PROGRAM_BINARY_RETRIEVABLE_HINT" },
-			{ GL_TRANSFORM_FEEDBACK_BUFFER_MODE, "GL_TRANSFORM_FEEDBACK_BUFFER_MODE" },
-			{ GL_TRANSFORM_FEEDBACK_VARYINGS, "GL_TRANSFORM_FEEDBACK_VARYINGS" },
-			{ GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH, "GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH" },
-			{ GL_VALIDATE_STATUS, "GL_VALIDATE_STATUS" }
-		};
-		std::cerr << "Program status: " << program_object << '\n';
-		std::for_each(program_status.begin(), program_status.end(), [=](decltype(program_status)::reference kv) {
-			EGLint status;
-			glGetProgramiv(program_object, kv.first, &status);
-			std::cerr << kv.second << ": " << status << '\n';
-		});
-	}
-
-	GLint num_active_uniforms = 0;
-	GLint max_length_active_uniform = 0;
-	glGetProgramiv(program_object, GL_ACTIVE_UNIFORMS, &num_active_uniforms);
-	if (num_active_uniforms > 0) {
-		glGetProgramiv(program_object, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max_length_active_uniform);
-		std::vector<GLchar> uniform_name(max_length_active_uniform);
-
-		for (int i = 0; i < num_active_uniforms; ++i) {
-			GLsizei length = 0;
-			GLsizei size = 0;
-			GLenum type;
-			glGetActiveUniform(program_object, i, static_cast<GLsizei>(uniform_name.capacity()),
-				&length, &size, &type, uniform_name.data());
-			std::cerr << "uniform[" << i << "] = " << uniform_name.data() << '\n';
-			std::cerr << "length: " << length << ", size: " << size << ", type: 0x" << std::hex << type << '\n';
-		}
 	}
 
 	//These calls does not delete immediately, but marked them to be deleted
@@ -208,8 +322,10 @@ extern "C"
 int esMain(ESContext *esContext)
 {
 	esContext->userData = malloc(sizeof user_data);
-	esCreateWindow(esContext, "Hello Triangle", 640, 480,
-		ES_WINDOW_RGB | ES_WINDOW_ALPHA | ES_WINDOW_DEPTH);
+	if (!esCreateWindow(esContext, "Hello Triangle", 640, 480,
+		ES_WINDOW_RGB | ES_WINDOW_ALPHA | ES_WINDOW_DEPTH)) {
+		print_egl_error(eglGetError());
+	}
 
 	if (!init(esContext)) {
 		return GL_FALSE;
@@ -218,12 +334,14 @@ int esMain(ESContext *esContext)
 	esRegisterShutdownFunc(esContext, shutdown);
 	esRegisterDrawFunc(esContext, draw);
 
+	print_display_config(esContext->eglDisplay, esContext->eglConfig);
+	print_program_status(static_cast<user_data*>(esContext->userData)->program_object);
+	print_uniform_info(static_cast<user_data*>(esContext->userData)->program_object);
 	return GL_TRUE;
 }
 
 extern "C" void WinLoop(ESContext *esContext);
-
-int main()
+int debugMain()
 {
 	ESContext context = { 0, };
 	user_data userdata = { 0, };
@@ -281,48 +399,15 @@ int main()
 		return 1;
 	}
 	else {
-		EGLint attrib;
-		eglGetConfigAttrib(context.eglDisplay, config, EGL_RED_SIZE, &attrib);
-		std::cout << "EGL_RED_SIZE: " << attrib << '\n';
-		eglGetConfigAttrib(context.eglDisplay, config, EGL_GREEN_SIZE, &attrib);
-		std::cout << "EGL_GREEN_SIZE: " << attrib << '\n';
-		eglGetConfigAttrib(context.eglDisplay, config, EGL_BLUE_SIZE, &attrib);
-		std::cout << "EGL_BLUE_SIZE: " << attrib << '\n';
-		eglGetConfigAttrib(context.eglDisplay, config, EGL_ALPHA_SIZE, &attrib);
-		std::cout << "EGL_ALPHA_SIZE: " << attrib << '\n';
-		eglGetConfigAttrib(context.eglDisplay, config, EGL_DEPTH_SIZE, &attrib);
-		std::cout << "EGL_DEPTH_SIZE: " << attrib << '\n';
-		eglGetConfigAttrib(context.eglDisplay, config, EGL_STENCIL_SIZE, &attrib);
-		std::cout << "EGL_STENCIL_SIZE: " << attrib << '\n';
-		eglGetConfigAttrib(context.eglDisplay, config, EGL_RENDERABLE_TYPE, &attrib);
-		std::cout << "EGL_RENDERABLE_TYPE: 0x" << std::hex << attrib << '\n';
+		print_display_config(context.eglDisplay, config);
 	}
 
 	if ((context.eglSurface = eglCreateWindowSurface(context.eglDisplay, config,
 		context.eglNativeWindow, NULL)) == EGL_NO_SURFACE) {
-		EGLint error = eglGetError();
-		std::cerr << std::hex << error << '\n';
-		switch (error) {
-		case EGL_BAD_MATCH:
-			std::cerr << "EGL_BAD_MATCH:\n";
-			std::cerr << "Check window and EGLConfig attributes to determine compatibility,\n"
-				"or verify that the EGLConfig supports rendering to a window\n";
-			break;
-		case EGL_BAD_CONFIG:
-			std::cerr << "EGL_BAD_CONFIG:\n";
-			std::cerr << "Verify that provided EGLConfig is valid\n";
-			break;
-		case EGL_BAD_NATIVE_WINDOW:
-			std::cerr << "EGL_BAD_NATIVE_WINDOW:\n";
-			std::cerr << "Verify that provided EGLNativeWindow is valid\n";
-			break;
-		case EGL_BAD_ALLOC:
-			std::cerr << "EGL_BAD_ALLOC:\n";
-			std::cerr << "Not enough resources available; handle and recover\n";
-			break;
-		}
+		print_egl_error(eglGetError());
 		return 1;
 	}
+
 	std::vector<EGLint> context_attributes{ EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
 	if ((context.eglContext = eglCreateContext(context.eglDisplay, config,
 		EGL_NO_CONTEXT, context_attributes.data())) == EGL_NO_CONTEXT) {
@@ -330,6 +415,7 @@ int main()
 		return 1;
 	}
 
+	//eglMakeCurrent may show some information about current hardware platform
 	if (eglMakeCurrent(context.eglDisplay, context.eglSurface, context.eglSurface,
 		context.eglContext) == EGL_FALSE) {
 		std::cerr << std::hex << eglGetError() << '\n';

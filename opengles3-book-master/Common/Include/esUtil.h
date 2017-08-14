@@ -126,6 +126,9 @@ struct ESContext
 
    /// EGL surface
    EGLSurface  eglSurface;
+
+   /// EGL config
+   EGLConfig eglConfig;
 #endif
 
    /// Callbacks
